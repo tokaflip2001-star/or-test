@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ARプロトタイプ再構築</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        #start-button {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 2000; padding: 20px 40px; background: #28a745; color: white;
+            border: none; border-radius: 50px; font-size: 20px; font-weight: bold;
+        }
+        #ui-guide {
+            position: fixed; top: 30px; left: 0; width: 100%; text-align: center;
+            color: white; z-index: 1000; font-size: 18px; pointer-events: none;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <button id="start-button" onclick="startAR()">ARカメラを起動する</button>
+    <div id="ui-guide" class="hidden">写真をスキャンしてください</div>
+
+    <a-scene 
+        mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiScanning: yes;" 
+        embedded renderer="colorManagement: true" vr-mode-ui="enabled: false">
+        
+        <a-assets>
+            <video id="introVideo" src="./intro_video.mp4" 
+                   preload="auto" loop="true" crossorigin="anonymous" 
+                   playsinline webkit-playsinline muted></video>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        <a-entity id="target-entity" mindar-image-target="targetIndex: 0">
+            <a-video id="ar-video-obj" src="#introVideo" position="0 0 0" height="0.75" width="1"></a-video>
+        </a-entity>
+    </a-scene>
+
+    <script>
+        const videoEl = document.querySelector("#introVideo");
+        const targetEl = document.querySelector('#target-entity');
+        const uiGuide = document.querySelector("#ui-guide");
+        const startButton = document.querySelector("#start-button");
+
+        function startAR() {
+            const sceneEl = document.querySelector('a-scene');
+            const arSystem = sceneEl.systems["mindar-image-system"];
+            startButton.classList.add("hidden");
+            uiGuide.classList.remove("hidden");
+            arSystem.start();
+            videoEl.play().then(() => { videoEl.pause(); videoEl.muted = false; });
+        }
+
+        targetEl.addEventListener("targetFound", () => {
+            uiGuide.classList.add("hidden");
+            videoEl.play();
+        });
+        targetEl.addEventListener("targetLost", () => {
+            videoEl.pause();
+        });
+    </script>
+</body>
+</html>

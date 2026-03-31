@@ -3,67 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ARプロトタイプ - 猫ちゃん版</title>
+    <title>AR復旧テスト</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; }
+        body { margin: 0; overflow: hidden; }
         #start-button {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 2000; padding: 20px 40px; background: #28a745; color: white;
-            border: none; border-radius: 50px; font-size: 20px; font-weight: bold;
+            z-index: 999; padding: 20px; background: #28a745; color: #fff; border: none; border-radius: 10px;
         }
     </style>
 </head>
 <body>
-    <button id="start-button" onclick="startAR()">ARカメラを起動する</button>
+    <button id="start-button" onclick="startAR()">AR開始</button>
 
     <a-scene 
         mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiScanning: yes;" 
-        embedded renderer="colorManagement: true, precision: medium" vr-mode-ui="enabled: false">
+        embedded vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         
         <a-assets>
-            <video id="introVideo" src="./intro_video.mp4" 
-                   preload="auto" loop="true" crossorigin="anonymous" 
+            <video id="v" src="./intro_video.mp4" 
+                   preload="auto" loop="true" 
+                   crossorigin="anonymous" 
                    playsinline webkit-playsinline muted></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <a-entity id="target-entity" mindar-image-target="targetIndex: 0">
-            <a-video id="ar-video-obj" src="#introVideo" 
-                     position="0 0 0.1" 
-                     width="1" height="1" 
-                     scale="1.5 1.5 1.5"
-                     transparent="false"></a-video>
+        <a-entity id="t" mindar-image-target="targetIndex: 0">
+            <a-video src="#v" width="1" height="1" position="0 0 0" scale="2 2 2"></a-video>
         </a-entity>
     </a-scene>
 
     <script>
-        const videoEl = document.querySelector("#introVideo");
-        const targetEl = document.querySelector('#target-entity');
-        const startButton = document.querySelector("#start-button");
+        const video = document.querySelector("#v");
+        const btn = document.querySelector("#start-button");
 
         function startAR() {
             const sceneEl = document.querySelector('a-scene');
             const arSystem = sceneEl.systems["mindar-image-system"];
-            startButton.style.display = "none";
-            arSystem.start();
+            btn.style.display = "none";
             
-            // iPhone/Android対策：無音再生で準備
-            videoEl.play().then(() => {
-                videoEl.pause();
-                videoEl.muted = false;
+            // カメラ起動
+            arSystem.start();
+
+            // 動画のロック解除（一度再生して即一時停止）
+            video.play().then(() => {
+                video.pause();
+                video.muted = false; // 音を出せる状態にする
             });
         }
 
-        targetEl.addEventListener("targetFound", () => {
-            console.log("見つけた！再生します");
-            videoEl.play();
+        // 認識した時
+        document.querySelector('#t').addEventListener("targetFound", () => {
+            video.play();
         });
 
-        targetEl.addEventListener("targetLost", () => {
-            videoEl.pause();
+        // 見失った時
+        document.querySelector('#t').addEventListener("targetLost", () => {
+            video.pause();
         });
     </script>
 </body>
